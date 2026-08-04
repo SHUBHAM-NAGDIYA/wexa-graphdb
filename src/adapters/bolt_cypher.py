@@ -10,8 +10,10 @@ Usage:
 """
 from __future__ import annotations
 import os
+import time
 from typing import Iterable
 from neo4j import GraphDatabase
+from neo4j.exceptions import ServiceUnavailable
 from .base import GraphDBAdapter
 
 
@@ -34,12 +36,20 @@ class BoltCypherAdapter(GraphDBAdapter):
         if self._driver:
             self._driver.close()
 
-    def clear(self) -> None:
-        self.run_query("MATCH (n) DETACH DELETE n")
+    def clear(self):
+        while True:
+            result = self.run_query("""
+                MATCH (n)
+                WITH n LIMIT 400
+                DETACH DELETE n
+                RETURN count(n) AS deleted
+            """)
+            deleted = result[0]["deleted"] if result else 0
+            print(f"[cognodb] deleted {deleted} nodes...")
+            if deleted == 0:
+                break
 
     def ensure_indexes(self) -> None:
-        # id backs point_lookup + traversal starts; bucket backs the
-        # separate "indexed/filtered lookup" workload (see workloads.py).
         self.run_query("CREATE INDEX IF NOT EXISTS FOR (n:Person) ON (n.id)")
         self.run_query("CREATE INDEX IF NOT EXISTS FOR (n:Person) ON (n.bucket)")
 
@@ -59,18 +69,36 @@ class BoltCypherAdapter(GraphDBAdapter):
             {"rows": list(edges)},
         )
 
-    def run_query(self, query: str, params: dict | None = None) -> list[dict]:
-        with self._driver.session() as session:
-            result = session.run(query, params or {})
+    def run_query(self, query: str, params: dict | None = None, _retries: int = 5) -> list[dict]:
+        for attempt in range(_retries):
+            try:
+                with self._driver.session() as session:
+                    result = session.run(query, params or {})
 
-            # Consume write queries without trying to read records
-            if query.strip().upper().startswith(
-                ("CREATE", "MATCH", "UNWIND", "MERGE", "DELETE", "DETACH", "DROP")
-            ) and "RETURN" not in query.upper():
-                result.consume()
-                return []
+                    if query.strip().upper().startswith(
+                        ("CREATE", "MATCH", "UNWIND", "MERGE", "DELETE", "DETACH", "DROP")
+                    ) and "RETURN" not in query.upper():
+                        result.consume()
+                        return []
 
-            return [record.data() for record in result]
+                    return [record.data() for record in result]
+
+            except ServiceUnavailable:
+                if attempt == _retries - 1:
+                    raise
+                wait = 5 * (attempt + 1)  # 5s, 10s, 15s, 20s
+                print(f"[{self.name}] connection dropped mid-query, waiting {wait}s before reconnect (attempt {attempt+1}/{_retries})...")
+                time.sleep(wait)
+                try:
+                    self._driver.close()
+                except Exception:
+                    pass
+                self._driver = None
+                try:
+                    self.connect()
+                except ServiceUnavailable:
+                    print(f"[{self.name}] reconnect attempt {attempt+1} also failed, will retry...")
+                    continue  # loop back and try the whole thing again
 
     def count_nodes(self) -> int:
         return self.run_query("MATCH (n) RETURN count(n) AS c")[0]["c"]

@@ -1,0 +1,55 @@
+{
+  "platform": "cognodb",
+  "run_started_utc": "2026-08-04T19:21:18Z",
+  "ingest": {
+    "platform": "cognodb",
+    "node_count": 36692,
+    "edge_count": 367662,
+    "full_dataset_edge_count": 367662,
+    "edge_load_was_limited": false,
+    "node_load_seconds": 20.379,
+    "edge_load_seconds": 523.206,
+    "total_wall_clock_seconds": 543.585,
+    "nodes_per_second": 1800.5,
+    "relationships_per_second": 702.7
+  },
+  "footprint": {
+    "node_count_after_load": 36692,
+    "edge_count_after_load": 367662,
+    "note": "Stored size/memory: record manually from platform console if exposed, else 'not observable'."
+  },
+  "read_workloads": [
+    {
+      "workload": "point_lookup",
+      "p50_ms": 251.64,
+      "p95_ms": 252.6,
+      "min_ms": 250.49,
+      "max_ms": 275.42,
+      "n": 100
+    },
+    {
+      "workload": "indexed_lookup",
+      "p50_ms": 256.54,
+      "p95_ms": 257.98,
+      "min_ms": 253.83,
+      "max_ms": 266.68,
+      "n": 100
+    },
+    {
+      "workload": "traverse_1hop",
+      "p50_ms": 252.16,
+      "p95_ms": 255.81,
+      "min_ms": 250.94,
+      "max_ms": 267.49,
+      "n": 100
+    },
+    {
+      "workload": "traverse_2hop",
+      "p50_ms": 261.71,
+      "p95_ms": 438.87,
+      "min_ms": 253.06,
+      "max_ms": 759.23,
+      "n": 100
+    }
+  ]
+}
