@@ -31,6 +31,7 @@ AQL_QUERIES = {
     "traverse_2hop": "FOR v IN 2..2 OUTBOUND CONCAT('Person/', @id) KNOWS LIMIT 50 RETURN v.id",
     "traverse_3hop": "FOR v IN 3..3 OUTBOUND CONCAT('Person/', @id) KNOWS LIMIT 50 RETURN v.id",
     "aggregation": """
+    
         FOR n IN Person
             LET out_degree = LENGTH(FOR v, e IN 1..1 OUTBOUND n KNOWS RETURN 1)
             SORT out_degree DESC
@@ -103,49 +104,44 @@ def run_mixed_workload(adapter_factory, concurrency: int = 10, duration_seconds:
         adapter = adapter_factory()
         adapter.connect()
         local_count = 0
+        local_errors = 0
         rng = random.Random()
         sample_ids = _sample_ids(adapter, 200)
         query = query_set_for(adapter)["point_lookup"]
         while time.perf_counter() < stop_at:
-            if rng.random() < 0.8:
-                adapter.run_query(query, {"id": rng.choice(sample_ids)})
-            else:
-                # Create-then-delete a throwaway node so the write side of the
-                # mix is exercised without permanently growing the dataset —
-                # important on free tiers with ~1GB storage caps.
-                throwaway_id = rng.randint(10_000_000, 20_000_000)
-                if adapter.query_language == "aql":
-                    adapter.run_query(
-                        "INSERT {id: @id, bucket: @id % 50} INTO Person",
-                        {"id": throwaway_id},
-                    )
-                    adapter.run_query(
-                        "FOR n IN Person FILTER n.id == @id REMOVE n IN Person",
-                        {"id": throwaway_id},
-                    )
+            try:
+                if rng.random() < 0.8:
+                    adapter.run_query(query, {"id": rng.choice(sample_ids)})
                 else:
-                    adapter.run_query(
-                        "CREATE (:Person {id: $id, bucket: $id % 50})",
-                        {"id": throwaway_id},
-                    )
-                    adapter.run_query(
-                        "MATCH (n:Person {id: $id}) DELETE n", {"id": throwaway_id}
-                    )
-            local_count += 1
+                    throwaway_id = rng.randint(10_000_000, 20_000_000)
+                    if adapter.query_language == "aql":
+                        adapter.run_query("INSERT {id: @id, bucket: @id % 50} INTO Person", {"id": throwaway_id})
+                        adapter.run_query("FOR n IN Person FILTER n.id == @id REMOVE n IN Person", {"id": throwaway_id})
+                    else:
+                        adapter.run_query("CREATE (:Person {id: $id, bucket: $id % 50})", {"id": throwaway_id})
+                        adapter.run_query("MATCH (n:Person {id: $id}) DELETE n", {"id": throwaway_id})
+                local_count += 1
+            except Exception as e:
+                local_errors += 1
+                if local_errors <= 3:
+                    print(f"[mixed-workload] op failed, continuing: {e}")
         adapter.close()
-        return local_count
+        return {"ops": local_count, "errors": local_errors}
+
 
     with cf.ThreadPoolExecutor(max_workers=concurrency) as pool:
         futures = [pool.submit(worker) for _ in range(concurrency)]
         for fut in cf.as_completed(futures):
             completed.append(fut.result())
 
-    total_ops = sum(completed)
+    total_ops = sum(c["ops"] for c in completed)
+    total_errors = sum(c["errors"] for c in completed)
     return {
         "workload": "mixed_read_write",
         "concurrency": concurrency,
         "duration_seconds": duration_seconds,
         "total_ops": total_ops,
+        "total_errors": total_errors,
         "throughput_qps": round(total_ops / duration_seconds, 1),
         "read_write_mix": "80/20",
     }

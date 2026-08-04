@@ -2,16 +2,7 @@
   "platform": "cognodb",
   "run_started_utc": "2026-08-04T19:21:18Z",
   "ingest": {
-    "platform": "cognodb",
-    "node_count": 36692,
-    "edge_count": 367662,
-    "full_dataset_edge_count": 367662,
-    "edge_load_was_limited": false,
-    "node_load_seconds": 20.379,
-    "edge_load_seconds": 523.206,
-    "total_wall_clock_seconds": 543.585,
-    "nodes_per_second": 1800.5,
-    "relationships_per_second": 702.7
+    "note": "skipped \u2014 reused data from previous run"
   },
   "footprint": {
     "node_count_after_load": 36692,
@@ -21,35 +12,65 @@
   "read_workloads": [
     {
       "workload": "point_lookup",
-      "p50_ms": 251.64,
-      "p95_ms": 252.6,
-      "min_ms": 250.49,
-      "max_ms": 275.42,
+      "p50_ms": 307.2,
+      "p95_ms": 349.06,
+      "min_ms": 264.27,
+      "max_ms": 397.32,
       "n": 100
     },
     {
       "workload": "indexed_lookup",
-      "p50_ms": 256.54,
-      "p95_ms": 257.98,
-      "min_ms": 253.83,
-      "max_ms": 266.68,
+      "p50_ms": 307.2,
+      "p95_ms": 310.51,
+      "min_ms": 269.11,
+      "max_ms": 378.55,
       "n": 100
     },
     {
       "workload": "traverse_1hop",
-      "p50_ms": 252.16,
-      "p95_ms": 255.81,
-      "min_ms": 250.94,
-      "max_ms": 267.49,
+      "p50_ms": 307.33,
+      "p95_ms": 311.77,
+      "min_ms": 266.55,
+      "max_ms": 345.02,
       "n": 100
     },
     {
       "workload": "traverse_2hop",
-      "p50_ms": 261.71,
-      "p95_ms": 438.87,
-      "min_ms": 253.06,
-      "max_ms": 759.23,
+      "p50_ms": 307.46,
+      "p95_ms": 610.64,
+      "min_ms": 275.15,
+      "max_ms": 1536.16,
       "n": 100
+    },
+    {
+      "workload": "traverse_3hop",
+      "error": "Failed to read from defunct connection IPv4Address(('db-f81cbc07.databases.cognodb.com', 7687)) (ResolvedIPv4Address(('8.234.181.95', 7687)))"
+    },
+    {
+      "workload": "aggregation",
+      "p50_ms": 1638.34,
+      "p95_ms": 1742.48,
+      "min_ms": 1521.67,
+      "max_ms": 2764.82,
+      "n": 100
+    }
+  ],
+  "mixed_workload_sweep": [
+    {
+      "workload": "mixed_read_write",
+      "concurrency": 1,
+      "duration_seconds": 20,
+      "total_ops": 44,
+      "throughput_qps": 2.2,
+      "read_write_mix": "80/20"
+    },
+    {
+      "concurrency": 10,
+      "error": "{neo4j_code: Neo.DatabaseError.General.UnknownError} {message: commit transaction: sync /data/alsgd.wal: file already closed} {gql_status: 50N42} {gql_status_description: error: general processing exception - unexpected error. commit transaction: sync /data/alsgd.wal: file already closed}"
+    },
+    {
+      "concurrency": 40,
+      "error": "{neo4j_code: Neo.DatabaseError.General.UnknownError} {message: commit transaction: alsgd: store failed closed after a durable-commit error: sync /data/alsgd.wal: file already closed} {gql_status: 50N42} {gql_status_description: error: general processing exception - unexpected error. commit transaction: alsgd: store failed closed after a durable-commit error: sync /data/alsgd.wal: file already closed}"
     }
   ]
 }

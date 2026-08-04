@@ -3,8 +3,14 @@ import os
 import time
 from typing import Iterable
 from neo4j import GraphDatabase
-from neo4j.exceptions import ServiceUnavailable, SessionExpired, TransientError
+from neo4j.exceptions import ServiceUnavailable, SessionExpired, TransientError, DatabaseError
 from .base import GraphDBAdapter
+
+
+
+
+
+
 
 
 class BoltCypherAdapter(GraphDBAdapter):
@@ -81,7 +87,7 @@ class BoltCypherAdapter(GraphDBAdapter):
 
                     return [record.data() for record in result]
 
-            except (ServiceUnavailable, SessionExpired, TransientError, OSError) as e:
+            except (ServiceUnavailable, SessionExpired, TransientError, DatabaseError, OSError) as e:
                 last_exc = e
                 wait = min(5 * (attempt + 1), 30)
                 print(f"[{self.name}] connection dropped mid-query ({type(e).__name__}: {e}), "
