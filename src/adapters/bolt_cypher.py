@@ -1,19 +1,9 @@
-"""
-One adapter for every platform that speaks Bolt + Cypher:
-CognoDB, Neo4j AuraDB, and Memgraph Cloud all work through the official
-neo4j Python driver, so we don't need three copies of this code.
-
-Usage:
-    CognoDBAdapter   = BoltCypherAdapter.for_platform("cognodb")
-    Neo4jAuraAdapter = BoltCypherAdapter.for_platform("neo4j_aura")
-    MemgraphAdapter  = BoltCypherAdapter.for_platform("memgraph")
-"""
 from __future__ import annotations
 import os
 import time
 from typing import Iterable
 from neo4j import GraphDatabase
-from neo4j.exceptions import ServiceUnavailable
+from neo4j.exceptions import ServiceUnavailable, SessionExpired, TransientError
 from .base import GraphDBAdapter
 
 
@@ -29,7 +19,14 @@ class BoltCypherAdapter(GraphDBAdapter):
         self._driver = None
 
     def connect(self) -> None:
-        self._driver = GraphDatabase.driver(self.uri, auth=(self.user, self.password))
+        self._driver = GraphDatabase.driver(
+            self.uri,
+            auth=(self.user, self.password),
+            max_connection_lifetime=120,      # recycle before server/network kills it
+            connection_timeout=15,
+            max_transaction_retry_time=30,
+            keep_alive=True,
+        )
         self._driver.verify_connectivity()
 
     def close(self) -> None:
@@ -45,7 +42,7 @@ class BoltCypherAdapter(GraphDBAdapter):
                 RETURN count(n) AS deleted
             """)
             deleted = result[0]["deleted"] if result else 0
-            print(f"[cognodb] deleted {deleted} nodes...")
+            print(f"[{self.name}] deleted {deleted} nodes...")
             if deleted == 0:
                 break
 
@@ -69,7 +66,8 @@ class BoltCypherAdapter(GraphDBAdapter):
             {"rows": list(edges)},
         )
 
-    def run_query(self, query: str, params: dict | None = None, _retries: int = 5) -> list[dict]:
+    def run_query(self, query: str, params: dict | None = None, _retries: int = 8) -> list[dict]:
+        last_exc = None
         for attempt in range(_retries):
             try:
                 with self._driver.session() as session:
@@ -83,11 +81,11 @@ class BoltCypherAdapter(GraphDBAdapter):
 
                     return [record.data() for record in result]
 
-            except ServiceUnavailable:
-                if attempt == _retries - 1:
-                    raise
-                wait = 5 * (attempt + 1)  # 5s, 10s, 15s, 20s
-                print(f"[{self.name}] connection dropped mid-query, waiting {wait}s before reconnect (attempt {attempt+1}/{_retries})...")
+            except (ServiceUnavailable, SessionExpired, TransientError, OSError) as e:
+                last_exc = e
+                wait = min(5 * (attempt + 1), 30)
+                print(f"[{self.name}] connection dropped mid-query ({type(e).__name__}: {e}), "
+                      f"waiting {wait}s before reconnect (attempt {attempt+1}/{_retries})...")
                 time.sleep(wait)
                 try:
                     self._driver.close()
@@ -96,9 +94,11 @@ class BoltCypherAdapter(GraphDBAdapter):
                 self._driver = None
                 try:
                     self.connect()
-                except ServiceUnavailable:
-                    print(f"[{self.name}] reconnect attempt {attempt+1} also failed, will retry...")
-                    continue  # loop back and try the whole thing again
+                except (ServiceUnavailable, OSError) as e2:
+                    print(f"[{self.name}] reconnect attempt {attempt+1} also failed: {e2}")
+                    # fall through to next loop iteration and try again
+
+        raise last_exc
 
     def count_nodes(self) -> int:
         return self.run_query("MATCH (n) RETURN count(n) AS c")[0]["c"]

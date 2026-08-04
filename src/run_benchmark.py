@@ -80,17 +80,27 @@ def main(platform: str, skip_load: bool = False):
         results["read_workloads"] = []
         for wl in READ_WORKLOADS:
             print(f"[{platform}] running {wl} (100 iterations after warm-up)...")
-            results["read_workloads"].append(run_read_workload(adapter, wl))
-            _save_partial()  # save after each workload too
+            try:
+                results["read_workloads"].append(run_read_workload(adapter, wl))
+            except Exception as e:
+                print(f"[{platform}] {wl} failed after retries: {e}")
+                results["read_workloads"].append({"workload": wl, "error": str(e)})
+            _save_partial()
     finally:
         adapter.close()
 
     print(f"[{platform}] running mixed read/write workload sweep (1/10/40 clients)...")
+
+
     results["mixed_workload_sweep"] = []
     for concurrency in (1, 10, 40):
-        results["mixed_workload_sweep"].append(
-            run_mixed_workload(factory, concurrency=concurrency, duration_seconds=20)
-        )
+        try:
+            results["mixed_workload_sweep"].append(
+                run_mixed_workload(factory, concurrency=concurrency, duration_seconds=20)
+            )
+        except Exception as e:
+            print(f"[{platform}] mixed workload at concurrency={concurrency} failed: {e}")
+            results["mixed_workload_sweep"].append({"concurrency": concurrency, "error": str(e)})
         _save_partial()
 
     print(f"[{platform}] done -> {out_path}")
