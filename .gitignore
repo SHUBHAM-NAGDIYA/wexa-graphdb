@@ -1,6 +1,0 @@
-.env
-__pycache__/
-*.pyc
-dataset/*.gz
-dataset/nodes.csv
-dataset/edges.csv
