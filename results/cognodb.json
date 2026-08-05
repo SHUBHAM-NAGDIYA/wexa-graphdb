@@ -12,34 +12,34 @@
   "read_workloads": [
     {
       "workload": "point_lookup",
-      "p50_ms": 307.2,
-      "p95_ms": 349.06,
-      "min_ms": 264.27,
-      "max_ms": 397.32,
+      "p50_ms": 248.74,
+      "p95_ms": 313.88,
+      "min_ms": 247.51,
+      "max_ms": 341.1,
       "n": 100
     },
     {
       "workload": "indexed_lookup",
-      "p50_ms": 307.2,
-      "p95_ms": 310.51,
-      "min_ms": 269.11,
-      "max_ms": 378.55,
+      "p50_ms": 252.42,
+      "p95_ms": 254.46,
+      "min_ms": 249.91,
+      "max_ms": 256.78,
       "n": 100
     },
     {
       "workload": "traverse_1hop",
-      "p50_ms": 307.33,
-      "p95_ms": 311.77,
-      "min_ms": 266.55,
-      "max_ms": 345.02,
+      "p50_ms": 290.98,
+      "p95_ms": 326.18,
+      "min_ms": 247.51,
+      "max_ms": 407.58,
       "n": 100
     },
     {
       "workload": "traverse_2hop",
-      "p50_ms": 307.46,
-      "p95_ms": 610.64,
-      "min_ms": 275.15,
-      "max_ms": 1536.16,
+      "p50_ms": 262.45,
+      "p95_ms": 496.12,
+      "min_ms": 250.77,
+      "max_ms": 1274.74,
       "n": 100
     },
     {
@@ -48,10 +48,10 @@
     },
     {
       "workload": "aggregation",
-      "p50_ms": 1638.34,
-      "p95_ms": 1742.48,
-      "min_ms": 1521.67,
-      "max_ms": 2764.82,
+      "p50_ms": 1638.05,
+      "p95_ms": 1741.31,
+      "min_ms": 1511.33,
+      "max_ms": 3064.2,
       "n": 100
     }
   ],
@@ -60,17 +60,28 @@
       "workload": "mixed_read_write",
       "concurrency": 1,
       "duration_seconds": 20,
-      "total_ops": 44,
-      "throughput_qps": 2.2,
+      "total_ops": 40,
+      "total_errors": 0,
+      "throughput_qps": 2.0,
       "read_write_mix": "80/20"
     },
     {
+      "workload": "mixed_read_write",
       "concurrency": 10,
-      "error": "{neo4j_code: Neo.DatabaseError.General.UnknownError} {message: commit transaction: sync /data/alsgd.wal: file already closed} {gql_status: 50N42} {gql_status_description: error: general processing exception - unexpected error. commit transaction: sync /data/alsgd.wal: file already closed}"
+      "duration_seconds": 20,
+      "total_ops": 358,
+      "total_errors": 0,
+      "throughput_qps": 17.9,
+      "read_write_mix": "80/20"
     },
     {
+      "workload": "mixed_read_write",
       "concurrency": 40,
-      "error": "{neo4j_code: Neo.DatabaseError.General.UnknownError} {message: commit transaction: alsgd: store failed closed after a durable-commit error: sync /data/alsgd.wal: file already closed} {gql_status: 50N42} {gql_status_description: error: general processing exception - unexpected error. commit transaction: alsgd: store failed closed after a durable-commit error: sync /data/alsgd.wal: file already closed}"
+      "duration_seconds": 20,
+      "total_ops": 2,
+      "total_errors": 0,
+      "throughput_qps": 0.1,
+      "read_write_mix": "80/20"
     }
   ]
 }

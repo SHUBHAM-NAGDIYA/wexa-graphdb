@@ -2,6 +2,30 @@
 Loads dataset/nodes.csv and dataset/edges.csv into a given adapter in
 batches, and measures ingest throughput as required by section 5.2.
 """
+
+from adapters.bolt_cypher import BoltCypherAdapter
+from adapters.arangodb_adapter import ArangoDBAdapter
+from adapters.falkordb_adapter import FalkorDBAdapter
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+PLATFORM_FACTORIES = {
+    "cognodb": lambda: BoltCypherAdapter("cognodb"),
+    "neo4j": lambda: BoltCypherAdapter("neo4j"),
+    "memgraph": lambda: BoltCypherAdapter("memgraph"),
+    "arangodb": ArangoDBAdapter,
+    "falkordb": FalkorDBAdapter,
+}
+
+
+
+
+
+
+import sys
 import csv
 import os
 import time
@@ -101,3 +125,35 @@ def load_dataset(adapter: GraphDBAdapter, nodes_csv: str, edges_csv: str) -> dic
         "nodes_per_second": round(len(nodes) / t_nodes, 1) if t_nodes > 0 else None,
         "relationships_per_second": round(len(edges) / t_edges, 1) if t_edges > 0 else None,
     }
+
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python src/load.py <platform>")
+        print("Platforms: " + ", ".join(PLATFORM_FACTORIES.keys()))
+        sys.exit(1)
+
+    platform = sys.argv[1]
+
+    if platform not in PLATFORM_FACTORIES:
+        print(f"Unknown platform: {platform}")
+        sys.exit(1)
+
+    adapter = PLATFORM_FACTORIES[platform]()
+    adapter.connect()
+
+    try:
+        result = load_dataset(
+            adapter,
+            "dataset/nodes.csv",
+            "dataset/edges.csv"
+        )
+
+        print("\nLoad completed successfully!\n")
+
+        for key, value in result.items():
+            print(f"{key}: {value}")
+
+    finally:
+        adapter.close()

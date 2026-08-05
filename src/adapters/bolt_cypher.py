@@ -19,9 +19,9 @@ class BoltCypherAdapter(GraphDBAdapter):
     def __init__(self, platform_key: str):
         self.name = platform_key
         env_prefix = platform_key.upper()
-        self.uri = os.environ[f"{env_prefix}_URI"]
-        self.user = os.environ[f"{env_prefix}_USER"]
-        self.password = os.environ[f"{env_prefix}_PASSWORD"]
+        self.uri = os.environ[f"{env_prefix}_AURA_URI"]
+        self.user = os.environ[f"{env_prefix}_AURA_USER"]
+        self.password = os.environ[f"{env_prefix}_AURA_PASSWORD"]
         self._driver = None
 
     def connect(self) -> None:
