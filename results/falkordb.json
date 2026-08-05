@@ -1,0 +1,90 @@
+{
+  "platform": "falkordb",
+  "ingest": {
+    "note": "skipped \u2014 reused data from previous run"
+  },
+  "footprint": {
+    "node_count_after_load": 19000,
+    "edge_count_after_load": 0,
+    "note": "Stored size/memory: record manually from platform console if exposed, else 'not observable'."
+  },
+  "read_workloads": [
+    {
+      "workload": "point_lookup",
+      "p50_ms": 28.26,
+      "p95_ms": 30.0,
+      "min_ms": 27.45,
+      "max_ms": 31.5,
+      "n": 100
+    },
+    {
+      "workload": "indexed_lookup",
+      "p50_ms": 28.67,
+      "p95_ms": 31.3,
+      "min_ms": 27.72,
+      "max_ms": 33.06,
+      "n": 100
+    },
+    {
+      "workload": "traverse_1hop",
+      "p50_ms": 28.24,
+      "p95_ms": 33.61,
+      "min_ms": 27.29,
+      "max_ms": 120.59,
+      "n": 100
+    },
+    {
+      "workload": "traverse_2hop",
+      "p50_ms": 28.17,
+      "p95_ms": 30.42,
+      "min_ms": 27.2,
+      "max_ms": 31.82,
+      "n": 100
+    },
+    {
+      "workload": "traverse_3hop",
+      "p50_ms": 28.42,
+      "p95_ms": 35.06,
+      "min_ms": 27.37,
+      "max_ms": 40.96,
+      "n": 100
+    },
+    {
+      "workload": "aggregation",
+      "p50_ms": 39.45,
+      "p95_ms": 42.96,
+      "min_ms": 38.21,
+      "max_ms": 49.2,
+      "n": 100
+    }
+  ],
+  "mixed_workload_sweep": [
+    {
+      "workload": "mixed_read_write",
+      "concurrency": 1,
+      "duration_seconds": 20,
+      "total_ops": 436,
+      "total_errors": 0,
+      "throughput_qps": 21.8,
+      "read_write_mix": "80/20"
+    },
+    {
+      "workload": "mixed_read_write",
+      "concurrency": 10,
+      "duration_seconds": 20,
+      "total_ops": 3744,
+      "total_errors": 0,
+      "throughput_qps": 187.2,
+      "read_write_mix": "80/20"
+    },
+    {
+      "workload": "mixed_read_write",
+      "concurrency": 40,
+      "duration_seconds": 20,
+      "total_ops": 9459,
+      "total_errors": 0,
+      "throughput_qps": 472.9,
+      "read_write_mix": "80/20"
+    }
+  ]
+}

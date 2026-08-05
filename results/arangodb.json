@@ -1,0 +1,17 @@
+{
+  "platform": "arangodb",
+  "ingest": {
+    "note": "skipped \u2014 reused data from previous run"
+  },
+  "footprint": {
+    "node_count_after_load": 2500,
+    "edge_count_after_load": 0,
+    "note": "Stored size/memory: record manually from platform console if exposed, else 'not observable'."
+  },
+  "read_workloads": [
+    {
+      "workload": "point_lookup",
+      "error": "'int' object is not subscriptable"
+    }
+  ]
+}

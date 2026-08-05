@@ -45,8 +45,7 @@ class BoltCypherAdapter(GraphDBAdapter):
             keep_alive=True,
         )
 
-        self._driver.verify_connectivity()
-
+        self._driver.verify_connectivity
         print(f"[{self.name}] connected successfully")
 
     def close(self) -> None:
